@@ -32,12 +32,31 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
 
-      setAppointments(response.data);
-      console.log("MyPatientAppointments: Randevular çekildi:", response.data);
+      // Güvenlik: Null/undefined kontrolü ve eksik veri filtresi
+      const validAppointments = Array.isArray(response.data) 
+        ? response.data.filter(appt => 
+            appt && 
+            appt.id && 
+            appt.time_slot && 
+            appt.time_slot.start_time
+          )
+        : [];
+
+      setAppointments(validAppointments);
+      console.log("MyPatientAppointments: Randevular çekildi (filtrelenmiş):", validAppointments);
 
     } catch (err) {
       console.error("MyPatientAppointments: Randevu çekme hatası!", err);
-      setError("Randevular çekilirken bir hata oluştu.");
+      
+      // 404 hatası özel işleme
+      if (err.response?.status === 404) {
+        setError("Sayfa bulunamadı. Lütfen sayfayı yenileyin.");
+        setAppointments([]); // Boş liste göster
+      } else if (err.response?.status === 401) {
+        setError("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.");
+      } else {
+        setError("Randevular çekilirken bir hata oluştu.");
+      }
     } finally {
       setLoading(false); 
     }
@@ -82,6 +101,15 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
     } catch (err) {
       const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
       console.error("Randevu iptal edilemedi:", errorData);
+      
+      // 404 hatası - randevu zaten silinmiş olabilir, listeyi yenile
+      if (err.response?.status === 404) {
+        console.log("Randevu zaten silinmiş, liste yenileniyor...");
+        fetchMyAppointments(); // Listeyi yeniden çek
+        alert('Randevu zaten silinmiş veya bulunamadı. Liste yenilendi.');
+        setCancellingId(null);
+        return;
+      }
       
       let errorMessage = "Randevu iptal edilemedi.";
       if (err.response?.data?.detail) {
@@ -139,28 +167,36 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
         </div>
       ) : (
         <div className="grid gap-4">
-          {appointments.map(appt => (
-            <div 
-              key={appt.id} 
-              className="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
-            > 
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <span className="text-blue-600 text-xl mr-3">📅</span>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Randevu Tarihi</p>
-                    <p className="text-gray-900 font-semibold text-lg">
-                      {new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { 
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
+          {appointments.map(appt => {
+            // Güvenlik: Null/undefined kontrolü - eğer veri eksikse bu randevuyu render etme
+            if (!appt || !appt.time_slot || !appt.time_slot.start_time) {
+              return null;
+            }
+
+            return (
+              <div 
+                key={appt.id} 
+                className="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+              > 
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <span className="text-blue-600 text-xl mr-3">📅</span>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Randevu Tarihi</p>
+                      <p className="text-gray-900 font-semibold text-lg">
+                        {appt.time_slot?.start_time
+                          ? new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { 
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'Tarih bilgisi yok'}
+                      </p>
+                    </div>
                   </div>
-                </div>
                 
                 <div className="flex items-start pt-2 border-t border-gray-200">
                   <span className="text-green-600 text-xl mr-3">📝</span>
@@ -195,7 +231,8 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

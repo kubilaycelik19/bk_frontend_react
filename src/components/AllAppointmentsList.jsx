@@ -43,12 +43,32 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
       // 'get_queryset' (Backend GÖREV 21) sayesinde,
       // Admin (Psikolog) bu adresten TÜM randevuları çeker.
 
-      setAppointments(response.data); // 'setSlots' değil
-      console.log("AllAppointmentsList: Randevular çekildi:", response.data);
+      // Güvenlik: Null/undefined kontrolü ve eksik veri filtresi
+      const validAppointments = Array.isArray(response.data) 
+        ? response.data.filter(appt => 
+            appt && 
+            appt.id && 
+            appt.patient && 
+            appt.time_slot && 
+            appt.time_slot.start_time
+          )
+        : [];
+
+      setAppointments(validAppointments); // 'setSlots' değil
+      console.log("AllAppointmentsList: Randevular çekildi (filtrelenmiş):", validAppointments);
 
     } catch (err) {
       console.error("AllAppointmentsList: Randevu çekme hatası!", err);
-      setError("Randevular çekilirken bir hata oluştu.");
+      
+      // 404 hatası özel işleme
+      if (err.response?.status === 404) {
+        setError("Sayfa bulunamadı. Lütfen sayfayı yenileyin.");
+        setAppointments([]); // Boş liste göster
+      } else if (err.response?.status === 401) {
+        setError("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.");
+      } else {
+        setError("Randevular çekilirken bir hata oluştu.");
+      }
     } finally {
       setLoading(false); 
     }
@@ -94,6 +114,15 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
     } catch (err) {
       const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
       console.error("Randevu iptal edilemedi:", errorData);
+      
+      // 404 hatası - randevu zaten silinmiş olabilir, listeyi yenile
+      if (err.response?.status === 404) {
+        console.log("Randevu zaten silinmiş, liste yenileniyor...");
+        fetchAppointments(); // Listeyi yeniden çek
+        alert('Randevu zaten silinmiş veya bulunamadı. Liste yenilendi.');
+        setCancellingId(null);
+        return;
+      }
       
       let errorMessage = "Randevu iptal edilemedi.";
       if (err.response?.data?.detail) {
@@ -151,73 +180,82 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
         </div>
       ) : (
         <div className="grid gap-4">
-          {appointments.map(appt => (
-            <div 
-              key={appt.id} 
-              className="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
-            > 
-              <div className="space-y-2">
-                <div className="flex items-start">
-                  <span className="text-purple-600 text-xl mr-3">👤</span>
-                  <div>
-                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Hasta</p>
-                    <p className="text-gray-900 font-semibold text-lg">
-                      {appt.patient.first_name} {appt.patient.last_name}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start pt-2 border-t border-gray-200">
-                  <span className="text-blue-600 text-xl mr-3">📅</span>
-                  <div>
-                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Tarih & Saat</p>
-                    <p className="text-gray-800 font-medium">
-                      {new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { 
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start pt-2 border-t border-gray-200">
-                  <span className="text-green-600 text-xl mr-3">📝</span>
-                  <div>
-                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Not</p>
-                    <p className="text-gray-700 text-sm sm:text-base break-words">{appt.notes || <span className="italic text-gray-500">(Not bırakılmadı)</span>}</p>
-                  </div>
-                </div>
-              </div>
+          {appointments.map(appt => {
+            // Güvenlik: Null/undefined kontrolü - eğer veri eksikse bu randevuyu render etme
+            if (!appt || !appt.patient || !appt.time_slot || !appt.time_slot.start_time) {
+              return null;
+            }
 
-              {/* Admin için Randevu İptal Butonu */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => handleCancelAppointment(appt.id, `${appt.patient.first_name} ${appt.patient.last_name}`)}
-                  disabled={cancellingId === appt.id}
-                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {cancellingId === appt.id ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      İptal Ediliyor...
-                    </>
-                  ) : (
-                    <>
-                      <span className="mr-2">❌</span>
-                      Randevuyu İptal Et
-                    </>
-                  )}
-                </button>
+            return (
+              <div 
+                key={appt.id} 
+                className="bg-gradient-to-r from-purple-50 to-blue-50 p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+              > 
+                <div className="space-y-2">
+                  <div className="flex items-start">
+                    <span className="text-purple-600 text-xl mr-3">👤</span>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Hasta</p>
+                      <p className="text-gray-900 font-semibold text-lg">
+                        {appt.patient?.first_name || 'İsimsiz'} {appt.patient?.last_name || ''}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start pt-2 border-t border-gray-200">
+                    <span className="text-blue-600 text-xl mr-3">📅</span>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Tarih & Saat</p>
+                      <p className="text-gray-800 font-medium">
+                        {appt.time_slot?.start_time 
+                          ? new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { 
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'Tarih bilgisi yok'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start pt-2 border-t border-gray-200">
+                    <span className="text-green-600 text-xl mr-3">📝</span>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Not</p>
+                      <p className="text-gray-700 text-sm sm:text-base break-words">{appt.notes || <span className="italic text-gray-500">(Not bırakılmadı)</span>}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Admin için Randevu İptal Butonu */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => handleCancelAppointment(appt.id, `${appt.patient?.first_name || 'İsimsiz'} ${appt.patient?.last_name || ''}`)}
+                    disabled={cancellingId === appt.id}
+                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {cancellingId === appt.id ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        İptal Ediliyor...
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-2">❌</span>
+                        Randevuyu İptal Et
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
