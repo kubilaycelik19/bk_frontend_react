@@ -6,11 +6,12 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
 
-function MyPatientAppointments({ refreshKey }) {
+function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null); // İptal edilen randevu ID'si
 
   const { accessToken } = useAuth();
 
@@ -46,7 +47,55 @@ function MyPatientAppointments({ refreshKey }) {
   // 'refreshKey' (sinyal) değiştiğinde, 'fetchAppointments'ı tekrar çalıştır
   useEffect(() => {
     fetchMyAppointments(); 
-  }, [fetchMyAppointments, refreshKey]); 
+  }, [fetchMyAppointments, refreshKey]);
+
+  // Randevu iptal fonksiyonu
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('Bu randevuyu iptal etmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    setCancellingId(appointmentId);
+    setError(null);
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/v1/appointments/${appointmentId}/`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+
+      console.log("Randevu başarıyla iptal edildi:", appointmentId);
+      alert('Randevunuz başarıyla iptal edildi.');
+
+      // Listeyi tazele
+      fetchMyAppointments();
+
+      // Slot listesinin de yenilenmesi için sinyal gönder
+      // Backend işleminin tamamlanması için kısa bir gecikme ekliyoruz
+      // (Eğer randevu tarihi geçmemişse, slot tekrar müsait olmalı)
+      if (onAppointmentCancelled) {
+        // Backend'in slot durumunu güncellemesi için kısa bir gecikme
+        setTimeout(() => {
+          onAppointmentCancelled();
+        }, 500);
+      }
+
+    } catch (err) {
+      const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
+      console.error("Randevu iptal edilemedi:", errorData);
+      
+      let errorMessage = "Randevu iptal edilemedi.";
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (typeof errorData === 'object') {
+        errorMessage = JSON.stringify(errorData);
+      }
+      
+      alert(`Hata: ${errorMessage}`);
+      setError(errorMessage);
+    } finally {
+      setCancellingId(null);
+    }
+  }; 
 
 
   // Arayüz (UI) Mantığı
@@ -117,12 +166,34 @@ function MyPatientAppointments({ refreshKey }) {
                   <span className="text-green-600 text-xl mr-3">📝</span>
                   <div className="flex-1">
                     <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Not</p>
-                    <p className="text-gray-700">{appt.notes || <span className="italic text-gray-500">(Not bırakılmadı)</span>}</p>
+                    <p className="text-gray-700 text-sm sm:text-base break-words">{appt.notes || <span className="italic text-gray-500">(Not bırakılmadı)</span>}</p>
                   </div>
                 </div>
               </div>
               
-              {/* TODO (V5.0): Randevu İptal Butonu buraya eklenebilir */}
+              {/* Randevu İptal Butonu */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => handleCancelAppointment(appt.id)}
+                  disabled={cancellingId === appt.id}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {cancellingId === appt.id ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      İptal Ediliyor...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">❌</span>
+                      Randevuyu İptal Et
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           ))}
         </div>

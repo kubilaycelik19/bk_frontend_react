@@ -44,7 +44,10 @@ function PatientPanelPage() {
       />
       
       {/* Hastanın Kendi Randevuları */}
-      <MyPatientAppointments refreshKey={refreshKey} />
+      <MyPatientAppointments 
+        refreshKey={refreshKey} 
+        onAppointmentCancelled={triggerRefresh}
+      />
     </div>
   );
 }

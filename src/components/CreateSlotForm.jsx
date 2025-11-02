@@ -196,23 +196,23 @@ function CreateSlotForm({ onSlotCreated }) {
           <label className="block text-gray-700 text-sm font-semibold mb-3" htmlFor="duration">
             <span className="mr-2">⏱️</span>Randevu Süresi
           </label>
-          <div className="grid grid-cols-5 gap-3">
-            {durationOptions.map((dur) => (
-              <button
-                key={dur}
-                type="button"
-                onClick={() => setDuration(dur)}
-                disabled={loading}
-                className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                  duration === dur
-                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg transform scale-105'
-                    : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-green-400 hover:bg-green-50'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {dur} dk
-              </button>
-            ))}
-          </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+                {durationOptions.map((dur) => (
+                  <button
+                    key={dur}
+                    type="button"
+                    onClick={() => setDuration(dur)}
+                    disabled={loading}
+                    className={`px-3 py-2 sm:px-4 sm:py-3 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                      duration === dur
+                        ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg transform scale-105'
+                        : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-green-400 hover:bg-green-50'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {dur} dk
+                  </button>
+                ))}
+              </div>
           <p className="mt-2 text-xs text-gray-500">
             Bitiş saati: {startDate && startTime ? (() => {
               const start = new Date(`${startDate}T${startTime}`);
@@ -259,13 +259,13 @@ function CreateSlotForm({ onSlotCreated }) {
           </div>
         )}
         
-        {/* Gönder Butonu */}
-        <div className="flex justify-end pt-4 border-t border-gray-200">
-          <button 
-            type="submit" 
-            disabled={loading || !startDate || !startTime}
-            className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none flex items-center"
-          >
+            {/* Gönder Butonu */}
+            <div className="flex justify-end pt-4 border-t border-gray-200">
+              <button 
+                type="submit" 
+                disabled={loading || !startDate || !startTime}
+                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+              >
             {loading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -49,33 +49,33 @@ function AdminPanelPage() {
         <div className="flex flex-wrap gap-2 border-t border-white/20 pt-4">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 ${
               activeTab === 'dashboard'
                 ? 'bg-white text-blue-600'
                 : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            📊 Dashboard
+            <span className="hidden sm:inline">📊 </span>Dashboard
           </button>
           <button
             onClick={() => setActiveTab('slots')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 ${
               activeTab === 'slots'
                 ? 'bg-white text-blue-600'
                 : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            📅 Zaman Slotları
+            <span className="hidden sm:inline">📅 </span>Slotlar
           </button>
           <button
             onClick={() => setActiveTab('appointments')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 ${
               activeTab === 'appointments'
                 ? 'bg-white text-blue-600'
                 : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            📋 Tüm Randevular
+            <span className="hidden sm:inline">📋 </span>Randevular
           </button>
         </div>
       </div>
@@ -147,7 +147,10 @@ function AdminPanelPage() {
       {activeTab === 'appointments' && (
         <div>
           {/* Tüm Alınmış Randevular Listesi */}
-          <AllAppointmentsList refreshKey={refreshKey} />
+          <AllAppointmentsList 
+            refreshKey={refreshKey} 
+            onAppointmentCancelled={triggerRefresh}
+          />
         </div>
       )}
     </div>
