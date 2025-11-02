@@ -1,10 +1,8 @@
     // src/components/AvailableSlots.jsx (NİHAİ DOĞRU HALİ)
 
-    import React, { useState, useEffect, useCallback } from 'react';
-    import axios from 'axios';
-    import { useAuth } from '../context/AuthContext.jsx'; 
-
-    const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
+import React, { useState, useEffect, useCallback } from 'react';
+import apiClient, { API_BASE_URL } from '../utils/apiClient.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
     // 'refreshKey' (sinyal) ve 'onAppointmentBooked' (sinyal gönderici)
     // prop'larını Ebeveyn'den (App.jsx) alıyoruz
@@ -18,10 +16,8 @@
       const [appointmentNote, setAppointmentNote] = useState(''); // Randevu notu
       const [showNoteModal, setShowNoteModal] = useState(false); // Not modal açık/kapalı 
 
-      // --- HATA DÜZELTMESİ (BU SATIR EKSİKTİ): ---
-      // Sadece 'accessToken'ı değil, 'currentUser'ı da
-      // Global Hafıza'dan (useAuth) alıyoruz.
-      const { accessToken, currentUser } = useAuth();
+      // Global Hafıza'dan currentUser'ı alıyoruz (role göre görüntüleme için)
+      const { currentUser } = useAuth();
       
       // API'den müsait slotları çeken fonksiyon
       const fetchSlots = useCallback(async () => {
@@ -32,16 +28,8 @@
         setLoading(true);
         setError(null);
 
-        if (!accessToken) {
-          setLoading(false);
-          setError("Giriş yapılmamış!");
-          return;
-        }
-
         try {
-          const response = await axios.get(`${API_BASE_URL}/api/v1/slots/`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
+          const response = await apiClient.get('/api/v1/slots/');
           
           // Backend'den gelen slotları filtrele: Sadece müsait (is_booked: false) olanları göster
           // Eğer backend zaten filtreliyorsa bu işlem gereksiz olabilir, ama güvenlik için ekliyoruz
@@ -56,11 +44,13 @@
           
         } catch (err) {
           console.error("AvailableSlots: Slot çekme hatası!", err);
-          setError("Slotlar çekilirken bir hata oluştu.");
+          const errorMessage = err?.error?.message || 
+                              "Slotlar çekilirken bir hata oluştu.";
+          setError(errorMessage);
         } finally {
           setLoading(false); 
         }
-      }, [accessToken]); // Bu 'accessToken'a bağlıdır
+      }, []); // API client token'ı otomatik yönetiyor
 
       
       // 'useEffect', hem ilk yüklemede hem de 'refreshKey' (sinyal) değiştiğinde
@@ -93,13 +83,10 @@
         setError(null);
 
         try {
-          await axios.post(`${API_BASE_URL}/api/v1/appointments/`, 
-            { 
-              "time_slot_id": selectedSlot.id, 
-              "notes": appointmentNote || ""
-            },
-            { headers: { 'Authorization': `Bearer ${accessToken}` } }
-          );
+          await apiClient.post('/api/v1/appointments/', {
+            "time_slot_id": selectedSlot.id, 
+            "notes": appointmentNote || ""
+          });
           
           console.log("Randevu başarıyla alındı:", selectedSlot.id);
           
@@ -115,16 +102,10 @@
           alert('Randevunuz başarıyla oluşturuldu!');
 
         } catch (err) {
-          const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
-          console.error("Randevu alınamadı:", errorData);
-          
-          let errorMessage = "Randevu alınamadı.";
-          if (err.response?.data?.detail) {
-            errorMessage = err.response.data.detail;
-          } else if (typeof errorData === 'object') {
-            errorMessage = JSON.stringify(errorData);
-          }
-          
+          console.error("Randevu alınamadı:", err);
+          const errorMessage = err?.error?.message || 
+                              err?.error?.detail || 
+                              "Randevu alınamadı. Lütfen tekrar deneyin.";
           setError(errorMessage);
         } finally {
           setBookingId(null); 
@@ -143,9 +124,7 @@
         }
 
         try {
-          await axios.delete(`${API_BASE_URL}/api/v1/slots/${slotId}/`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` } 
-          });
+          await apiClient.delete(`/api/v1/slots/${slotId}/`);
           
           console.log("Slot başarıyla silindi. ID:", slotId);
           alert('Müsait zaman slotu başarıyla silindi.');
@@ -154,10 +133,12 @@
           fetchSlots(); 
 
         } catch (err) {
-          const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
-          console.error("Slot silinemedi:", errorData);
-          alert(`Hata: Slot silinemedi. (Sebep: ${JSON.stringify(errorData)})`);
-          setError("Slot silinemedi.");
+          console.error("Slot silinemedi:", err);
+          const errorMessage = err?.error?.message || 
+                              err?.error?.detail || 
+                              "Slot silinemedi.";
+          alert(`Hata: ${errorMessage}`);
+          setError(errorMessage);
         } finally {
           setBookingId(null); 
         }

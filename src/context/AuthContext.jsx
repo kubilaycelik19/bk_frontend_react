@@ -1,10 +1,7 @@
 // src/context/AuthContext.jsx
 
 import React, { createContext, useState, useContext } from 'react';
-import axios from 'axios';
-
-// 1. API'mizin ana adresini buraya alıyoruz (daha merkezi)
-const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
+import apiClient, { API_BASE_URL } from '../utils/apiClient.js';
 
 // 2. Global "Hafıza Kutusu"nu (Context) yarat
 const AuthContext = createContext();
@@ -27,20 +24,25 @@ export function AuthProvider({ children }) {
   // LoginForm artık API'yi bilmeyecek. Sadece bu fonksiyonu çağıracak.
   const login = async (email, password) => {
     try {
-      // --- GÖREV 97'deki kodun aynısı ---
-      const response = await axios.post(`${API_BASE_URL}/api/token/`, {
+      // Token alma
+      const response = await apiClient.post('/api/token/', {
         email,
         password
       });
 
-      setAccessToken(response.data.access); // Token'ı global hafızaya kaydet
+      const accessToken = response.data.access;
+      setAccessToken(accessToken); // Token'ı global hafızaya kaydet
+      
+      // Token'ı localStorage'a da kaydet (interceptor için)
+      localStorage.setItem('accessToken', accessToken);
+      if (typeof window !== 'undefined') {
+        window.__authToken__ = accessToken;
+      }
+      
       console.log("AuthContext: Token alındı.");
 
-      // --- GÖREV 29'daki kodun (users/me) aynısı ---
-      // Token'ı kullanarak hemen "Ben Kimim?" diye sor
-      const userResponse = await axios.get(`${API_BASE_URL}/api/v1/users/me/`, {
-        headers: { 'Authorization': `Bearer ${response.data.access}` }
-      });
+      // Kullanıcı bilgilerini al
+      const userResponse = await apiClient.get('/api/v1/users/me/');
 
       setCurrentUser(userResponse.data); // Kullanıcıyı global hafızaya kaydet
       console.log("AuthContext: Kullanıcı rolü alındı:", userResponse.data);
@@ -48,11 +50,23 @@ export function AuthProvider({ children }) {
       return true; // Başarılı
 
     } catch (error) {
-      console.error("AuthContext: Giriş hatası!", error.response.data);
+      console.error("AuthContext: Giriş hatası!", error);
       // Hata durumunda hafızayı temizle
       setAccessToken(null);
       setCurrentUser(null);
-      return false; // Başarısız
+      localStorage.removeItem('accessToken');
+      if (typeof window !== 'undefined') {
+        window.__authToken__ = null;
+      }
+      
+      // Hata mesajını döndür (LoginForm'da kullanılabilir)
+      return { 
+        success: false, 
+        error: error.error || {
+          code: 'LOGIN_ERROR',
+          message: 'Giriş yapılamadı. E-posta veya şifrenizi kontrol edin.'
+        }
+      };
     }
   };
 
@@ -60,6 +74,10 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setAccessToken(null);
     setCurrentUser(null);
+    localStorage.removeItem('accessToken');
+    if (typeof window !== 'undefined') {
+      window.__authToken__ = null;
+    }
     console.log("AuthContext: Çıkış yapıldı.");
   };
 

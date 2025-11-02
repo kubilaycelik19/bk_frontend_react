@@ -2,10 +2,7 @@
 // Modern ve kullanıcı dostu slot ekleme formu
 
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext.jsx'; 
-
-const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
+import apiClient from '../utils/apiClient.js';
 
 function CreateSlotForm({ onSlotCreated }) {
   // Form state
@@ -16,8 +13,7 @@ function CreateSlotForm({ onSlotCreated }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // Global Hafızadan (AuthContext) 'accessToken'ı al
-  const { accessToken } = useAuth();
+  // Global Hafızadan (AuthContext) - Artık apiClient token'ı otomatik ekliyor
 
   // Süre seçenekleri (dakika)
   const durationOptions = [30, 45, 60, 90, 120];
@@ -65,14 +61,7 @@ function CreateSlotForm({ onSlotCreated }) {
     console.log("CreateSlotForm: Yeni slot yaratma isteği...", slotData);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/slots/`, 
-        slotData,
-        {
-          headers: { 
-            'Authorization': `Bearer ${accessToken}`
-          } 
-        }
-      );
+      const response = await apiClient.post('/api/v1/slots/', slotData);
 
       console.log("CreateSlotForm: Slot başarıyla yaratıldı!", response.data);
       
@@ -90,19 +79,13 @@ function CreateSlotForm({ onSlotCreated }) {
       setStartTime('');
       setDuration(60);
 
-    } catch (err) {
-      const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
-      console.error("CreateSlotForm: Slot yaratılamadı:", errorData);
-      
-      let errorMessage = "Slot yaratılamadı.";
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (typeof errorData === 'object') {
-        errorMessage = JSON.stringify(errorData);
-      }
-      
-      setError(errorMessage);
-    } finally {
+        } catch (err) {
+          console.error("CreateSlotForm: Slot yaratılamadı:", err);
+          const errorMessage = err?.error?.message || 
+                              err?.error?.detail || 
+                              "Slot yaratılamadı. Lütfen tekrar deneyin.";
+          setError(errorMessage);
+        } finally {
       setLoading(false);
     }
   };

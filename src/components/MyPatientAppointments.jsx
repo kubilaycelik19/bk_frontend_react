@@ -1,10 +1,8 @@
 // src/components/MyPatientAppointments.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext.jsx'; 
-
-const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
+import apiClient from '../utils/apiClient.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
 
@@ -13,24 +11,15 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null); // İptal edilen randevu ID'si
 
-  const { accessToken } = useAuth();
+  // API client token'ı otomatik yönetiyor, accessToken'a ihtiyacımız yok
 
   const fetchMyAppointments = useCallback(async () => {
     console.log("MyPatientAppointments: 'Benim' randevularım çekiliyor...");
     setLoading(true);
     setError(null);
 
-    if (!accessToken) {
-      setLoading(false);
-      setError("Giriş yapılmamış!");
-      return;
-    }
-
     try {
-
-      const response = await axios.get(`${API_BASE_URL}/api/v1/appointments/`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
+      const response = await apiClient.get('/api/v1/appointments/');
 
       // Güvenlik: Null/undefined kontrolü ve eksik veri filtresi
       const validAppointments = Array.isArray(response.data) 
@@ -48,19 +37,21 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
     } catch (err) {
       console.error("MyPatientAppointments: Randevu çekme hatası!", err);
       
-      // 404 hatası özel işleme
-      if (err.response?.status === 404) {
+      // Hata koduna göre özel mesajlar
+      if (err?.error?.code === 'NOT_FOUND') {
         setError("Sayfa bulunamadı. Lütfen sayfayı yenileyin.");
         setAppointments([]); // Boş liste göster
-      } else if (err.response?.status === 401) {
+      } else if (err?.error?.code === 'UNAUTHORIZED') {
         setError("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.");
       } else {
-        setError("Randevular çekilirken bir hata oluştu.");
+        const errorMessage = err?.error?.message || 
+                            "Randevular çekilirken bir hata oluştu.";
+        setError(errorMessage);
       }
     } finally {
       setLoading(false); 
     }
-  }, [accessToken]); 
+  }, []); // API client token'ı otomatik yönetiyor 
 
 
   // 'refreshKey' (sinyal) değiştiğinde, 'fetchAppointments'ı tekrar çalıştır
@@ -78,9 +69,7 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
     setError(null);
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/appointments/${appointmentId}/`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
+      await apiClient.delete(`/api/v1/appointments/${appointmentId}/`);
 
       console.log("Randevu başarıyla iptal edildi:", appointmentId);
       alert('Randevunuz başarıyla iptal edildi.');
@@ -99,11 +88,10 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
       }
 
     } catch (err) {
-      const errorData = err.response ? err.response.data : "API ile iletişim kurulamadı";
-      console.error("Randevu iptal edilemedi:", errorData);
+      console.error("Randevu iptal edilemedi:", err);
       
       // 404 hatası - randevu zaten silinmiş olabilir, listeyi yenile
-      if (err.response?.status === 404) {
+      if (err?.error?.code === 'NOT_FOUND') {
         console.log("Randevu zaten silinmiş, liste yenileniyor...");
         fetchMyAppointments(); // Listeyi yeniden çek
         alert('Randevu zaten silinmiş veya bulunamadı. Liste yenilendi.');
@@ -111,12 +99,9 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
         return;
       }
       
-      let errorMessage = "Randevu iptal edilemedi.";
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (typeof errorData === 'object') {
-        errorMessage = JSON.stringify(errorData);
-      }
+      const errorMessage = err?.error?.message || 
+                          err?.error?.detail || 
+                          "Randevu iptal edilemedi.";
       
       alert(`Hata: ${errorMessage}`);
       setError(errorMessage);

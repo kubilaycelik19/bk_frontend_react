@@ -49,23 +49,26 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // --- YENİ MANTIK (GÖREV 99) ---
-      // Artık API'yi (axios) burada çağırmıyoruz.
-      // Sadece global hafızadaki 'login' fonksiyonunu çağırıyoruz.
-      const success = await login(email, password); 
+      // Global hafızadaki 'login' fonksiyonunu çağır
+      const result = await login(email, password); 
 
-      if (!success) {
-        // 'login' fonksiyonu (AuthContext'te) 'false' dönerse,
-        // (örn: 401 hatası aldıysa) hafızaya hata mesajı yaz.
-        setError('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
-      } else {
+      if (result === true) {
         // Giriş başarılı - flag'i aktif et, useEffect yönlendirecek
         setLoginSuccess(true);
+      } else {
+        // Login fonksiyonu hata objesi döndü
+        const errorMessage = result?.error?.message || 
+                            result?.error?.detail || 
+                            'E-posta veya şifre hatalı. Lütfen tekrar deneyin.';
+        setError(errorMessage);
       }
 
     } catch (err) {
         // Beklenmedik bir hata (örn: API kapalı)
-        setError('Bir hata oluştu. Sunucu çalışıyor mu?');
+        const errorMessage = err?.error?.message || 
+                            err?.message || 
+                            'Bir hata oluştu. Sunucu çalışıyor mu?';
+        setError(errorMessage);
         console.error(err);
     }
 
