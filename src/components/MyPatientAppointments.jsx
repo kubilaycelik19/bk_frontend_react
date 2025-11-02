@@ -2,12 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext.jsx'; 
 
 const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
 
-// Bu bileşen de 'refreshKey' sinyalini dinleyecek
-// (Böylece Hasta randevu aldığında bu liste de tazelenir)
 function MyPatientAppointments({ refreshKey }) {
 
   const [appointments, setAppointments] = useState([]);
@@ -28,10 +26,7 @@ function MyPatientAppointments({ refreshKey }) {
     }
 
     try {
-      // API adresi AYNI (/api/v1/appointments/)
-      // Ama Backend (Render), token'ın HASTA'ya ait olduğunu
-      // görecek ve 'get_queryset' sayesinde SADECE bu hastanın
-      // randevularını döndürecek.
+
       const response = await axios.get(`${API_BASE_URL}/api/v1/appointments/`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
@@ -56,32 +51,81 @@ function MyPatientAppointments({ refreshKey }) {
 
   // Arayüz (UI) Mantığı
   if (loading) {
-    return <p>Randevularım yükleniyor...</p>;
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+        <div className="flex items-center justify-center py-8">
+          <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="ml-3 text-gray-600 font-medium">Randevularım yükleniyor...</span>
+        </div>
+      </div>
+    );
   }
+  
   if (error) {
-    return <p style={{ color: 'red' }}>{error}</p>;
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-red-200">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+          <p className="text-red-700 font-medium">{error}</p>
+        </div>
+      </div>
+    );
   }
 
-  // 6. JSX (HTML) Kısmı
+  // 6. JSX (HTML) Kısmı - Modern tasarım
   return (
-    <div style={{ padding: '20px', border: '1px solid #ddd', margin: '10px 0' }}>
-      <h3>Randevularım</h3>
+    <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-gray-800 mb-2">Randevularım</h3>
+        <p className="text-gray-600 text-sm">{appointments.length} aktif randevunuz bulunuyor</p>
+      </div>
+      
       {appointments.length === 0 ? (
-        <p>Gösterilecek (alınmış) randevu bulunamadı.</p>
+        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <div className="text-gray-400 text-4xl mb-3">📅</div>
+          <p className="text-gray-600 font-medium">Henüz randevunuz bulunmuyor.</p>
+          <p className="text-gray-500 text-sm mt-2">Yukarıdaki müsait slotlardan randevu alabilirsiniz.</p>
+        </div>
       ) : (
-        <ul>
+        <div className="grid gap-4">
           {appointments.map(appt => (
-            <li key={appt.id}> 
-              {/* Hasta zaten kendi adını biliyor,
-                  o yüzden 'patient' objesini göstermeye gerek yok */}
-              <strong>Tarih:</strong> {new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}
-              <br />
-              <strong>Not:</strong> {appt.notes || "(Not bırakılmadı)"}
-
+            <div 
+              key={appt.id} 
+              className="bg-gradient-to-r from-green-50 to-blue-50 p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+            > 
+              <div className="space-y-3">
+                <div className="flex items-start">
+                  <span className="text-blue-600 text-xl mr-3">📅</span>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Randevu Tarihi</p>
+                    <p className="text-gray-900 font-semibold text-lg">
+                      {new Date(appt.time_slot.start_time).toLocaleString('tr-TR', { 
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start pt-2 border-t border-gray-200">
+                  <span className="text-green-600 text-xl mr-3">📝</span>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Not</p>
+                    <p className="text-gray-700">{appt.notes || <span className="italic text-gray-500">(Not bırakılmadı)</span>}</p>
+                  </div>
+                </div>
+              </div>
+              
               {/* TODO (V5.0): Randevu İptal Butonu buraya eklenebilir */}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

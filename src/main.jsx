@@ -1,19 +1,16 @@
-// src/main.jsx
-
 import React from 'react'
-import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-// 'index.css'i sildiğimiz için bu import'u da silebilir veya bırakabiliriz
-// import './index.css' 
-
-// YENİ EKLEDİK: Global Hafıza Sağlayıcımızı import ediyoruz
+import './index.css'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* YENİ EKLEDİK: Tüm <App />'i <AuthProvider> ile sarıyoruz */}
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 )
