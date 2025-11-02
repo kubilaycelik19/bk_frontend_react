@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // YENİ EKLEDİK: Global hafıza kutumuza (AuthContext)
 // erişmemizi sağlayan 'useAuth' kancamızı import ediyoruz
 import { useAuth } from '../context/AuthContext.jsx';
+import toast from 'react-hot-toast';
 
 function LoginForm() {
   // Formun kendi hafızası (state)
@@ -61,6 +62,7 @@ function LoginForm() {
                             result?.error?.detail || 
                             'E-posta veya şifre hatalı. Lütfen tekrar deneyin.';
         setError(errorMessage);
+        toast.error(errorMessage);
       }
 
     } catch (err) {
@@ -69,6 +71,7 @@ function LoginForm() {
                             err?.message || 
                             'Bir hata oluştu. Sunucu çalışıyor mu?';
         setError(errorMessage);
+        toast.error(errorMessage);
         console.error(err);
     }
 

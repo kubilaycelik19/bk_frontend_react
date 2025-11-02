@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient, { API_BASE_URL } from '../utils/apiClient.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import toast from 'react-hot-toast';
 
     // 'refreshKey' (sinyal) ve 'onAppointmentBooked' (sinyal gönderici)
     // prop'larını Ebeveyn'den (App.jsx) alıyoruz
@@ -99,7 +100,7 @@ import { useAuth } from '../context/AuthContext.jsx';
           }
 
           // Başarı mesajı
-          alert('Randevunuz başarıyla oluşturuldu!');
+          toast.success('Randevunuz başarıyla oluşturuldu! 🎉');
 
         } catch (err) {
           console.error("Randevu alınamadı:", err);
@@ -107,6 +108,7 @@ import { useAuth } from '../context/AuthContext.jsx';
                               err?.error?.detail || 
                               "Randevu alınamadı. Lütfen tekrar deneyin.";
           setError(errorMessage);
+          toast.error(errorMessage);
         } finally {
           setBookingId(null); 
         }
@@ -127,7 +129,7 @@ import { useAuth } from '../context/AuthContext.jsx';
           await apiClient.delete(`/api/v1/slots/${slotId}/`);
           
           console.log("Slot başarıyla silindi. ID:", slotId);
-          alert('Müsait zaman slotu başarıyla silindi.');
+          toast.success('Müsait zaman slotu başarıyla silindi.');
           
           // BAŞARI: Listeyi direkt tazele
           fetchSlots(); 
@@ -137,7 +139,7 @@ import { useAuth } from '../context/AuthContext.jsx';
           const errorMessage = err?.error?.message || 
                               err?.error?.detail || 
                               "Slot silinemedi.";
-          alert(`Hata: ${errorMessage}`);
+          toast.error(`Hata: ${errorMessage}`);
           setError(errorMessage);
         } finally {
           setBookingId(null); 

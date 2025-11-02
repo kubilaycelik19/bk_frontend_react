@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../utils/apiClient.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import toast from 'react-hot-toast';
 
 function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
 
@@ -22,16 +23,25 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
       const response = await apiClient.get('/api/v1/appointments/');
 
       // Güvenlik: Null/undefined kontrolü ve eksik veri filtresi
+      // Response.data boş dizi olabilir (randevu yoksa) veya hata olabilir
+      if (!response || !response.data) {
+        console.warn("MyPatientAppointments: Response veya response.data boş");
+        setAppointments([]);
+        return;
+      }
+
       const validAppointments = Array.isArray(response.data) 
-        ? response.data.filter(appt => 
-            appt && 
-            appt.id && 
-            appt.time_slot && 
-            appt.time_slot.start_time
-          )
+        ? response.data.filter(appt => {
+            // Çok katmanlı null kontrolü
+            if (!appt || !appt.id) return false;
+            if (!appt.time_slot || typeof appt.time_slot !== 'object') return false;
+            if (!appt.time_slot.start_time) return false;
+            return true;
+          })
         : [];
 
       setAppointments(validAppointments);
+      setError(null); // Başarılı olursa hata mesajını temizle
       console.log("MyPatientAppointments: Randevular çekildi (filtrelenmiş):", validAppointments);
 
     } catch (err) {
@@ -39,14 +49,27 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
       
       // Hata koduna göre özel mesajlar
       if (err?.error?.code === 'NOT_FOUND') {
-        setError("Sayfa bulunamadı. Lütfen sayfayı yenileyin.");
+        // 404 hatası - randevu yoksa veya sayfa bulunamadıysa
+        const notFoundMessage = "Randevunuz bulunamadı veya sayfa bulunamadı. Liste yenileniyor...";
+        setError(notFoundMessage);
         setAppointments([]); // Boş liste göster
+        toast.info(notFoundMessage);
+        // Listeyi otomatik yenile
+        setTimeout(() => {
+          fetchMyAppointments();
+        }, 1000);
       } else if (err?.error?.code === 'UNAUTHORIZED') {
-        setError("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.");
+        const unauthorizedMessage = "Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.";
+        setError(unauthorizedMessage);
+        setAppointments([]);
+        toast.error(unauthorizedMessage);
       } else {
         const errorMessage = err?.error?.message || 
+                            err?.error?.detail ||
                             "Randevular çekilirken bir hata oluştu.";
         setError(errorMessage);
+        toast.error(errorMessage);
+        setAppointments([]); // Hata durumunda boş liste göster
       }
     } finally {
       setLoading(false); 
@@ -72,7 +95,7 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
       await apiClient.delete(`/api/v1/appointments/${appointmentId}/`);
 
       console.log("Randevu başarıyla iptal edildi:", appointmentId);
-      alert('Randevunuz başarıyla iptal edildi.');
+      toast.success('Randevunuz başarıyla iptal edildi.');
 
       // Listeyi tazele
       fetchMyAppointments();
@@ -94,7 +117,7 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
       if (err?.error?.code === 'NOT_FOUND') {
         console.log("Randevu zaten silinmiş, liste yenileniyor...");
         fetchMyAppointments(); // Listeyi yeniden çek
-        alert('Randevu zaten silinmiş veya bulunamadı. Liste yenilendi.');
+        toast.info('Randevu zaten silinmiş veya bulunamadı. Liste yenilendi.');
         setCancellingId(null);
         return;
       }
@@ -103,7 +126,7 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
                           err?.error?.detail || 
                           "Randevu iptal edilemedi.";
       
-      alert(`Hata: ${errorMessage}`);
+      toast.error(`Hata: ${errorMessage}`);
       setError(errorMessage);
     } finally {
       setCancellingId(null);

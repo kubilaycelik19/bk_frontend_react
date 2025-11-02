@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import apiClient from '../utils/apiClient.js';
+import toast from 'react-hot-toast';
 
 function CreateSlotForm({ onSlotCreated }) {
   // Form state
@@ -67,6 +68,7 @@ function CreateSlotForm({ onSlotCreated }) {
       
       // Başarı mesajı
       setSuccess(true);
+      toast.success('Müsait zaman slotu başarıyla oluşturuldu! 🎉');
       setTimeout(() => setSuccess(false), 5000);
 
       // Listeyi tazele
@@ -85,6 +87,7 @@ function CreateSlotForm({ onSlotCreated }) {
                               err?.error?.detail || 
                               "Slot yaratılamadı. Lütfen tekrar deneyin.";
           setError(errorMessage);
+          toast.error(errorMessage);
         } finally {
       setLoading(false);
     }
