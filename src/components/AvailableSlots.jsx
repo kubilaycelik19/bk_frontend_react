@@ -18,10 +18,14 @@ import toast from 'react-hot-toast';
       const [showNoteModal, setShowNoteModal] = useState(false); // Not modal açık/kapalı 
 
       // Global Hafıza'dan currentUser'ı alıyoruz (role göre görüntüleme için)
-      const { currentUser } = useAuth();
+      const { currentUser, loading: authLoading } = useAuth();
       
       // API'den müsait slotları çeken fonksiyon
       const fetchSlots = useCallback(async () => {
+        // AuthContext kullanıcı bilgisini yüklüyorsa bekle
+        if (authLoading || !currentUser) {
+          return;
+        }
         
         // --- İŞTE İLK LOGLAMA BURADA ---
         console.log("AvailableSlots: Slotlar çekiliyor...");
@@ -51,7 +55,7 @@ import toast from 'react-hot-toast';
         } finally {
           setLoading(false); 
         }
-      }, []); // API client token'ı otomatik yönetiyor
+      }, [authLoading, currentUser]); // authLoading ve currentUser değişikliklerini dinle
 
       
       // 'useEffect', hem ilk yüklemede hem de 'refreshKey' (sinyal) değiştiğinde

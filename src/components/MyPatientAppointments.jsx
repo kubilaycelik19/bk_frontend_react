@@ -13,8 +13,14 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
   const [cancellingId, setCancellingId] = useState(null); // İptal edilen randevu ID'si
 
   // API client token'ı otomatik yönetiyor, accessToken'a ihtiyacımız yok
+  const { loading: authLoading, currentUser: authUser } = useAuth();
 
   const fetchMyAppointments = useCallback(async () => {
+    // AuthContext kullanıcı bilgisini yüklüyorsa bekle
+    if (authLoading || !authUser) {
+      return;
+    }
+
     console.log("MyPatientAppointments: 'Benim' randevularım çekiliyor...");
     setLoading(true);
     setError(null);
@@ -74,7 +80,7 @@ function MyPatientAppointments({ refreshKey, onAppointmentCancelled }) {
     } finally {
       setLoading(false); 
     }
-  }, []); // API client token'ı otomatik yönetiyor 
+  }, [authLoading, authUser]); // authLoading ve authUser değişikliklerini dinle 
 
 
   // 'refreshKey' (sinyal) değiştiğinde, 'fetchAppointments'ı tekrar çalıştır

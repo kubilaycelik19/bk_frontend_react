@@ -18,9 +18,15 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
   const [cancellingId, setCancellingId] = useState(null); // İptal edilen randevu ID'si
 
   // API client token'ı otomatik yönetiyor, accessToken'a ihtiyacımız yok
+  const { loading: authLoading, currentUser } = useAuth();
 
   // 'AvailableSlots'tan kopyaladık:
   const fetchAppointments = useCallback(async () => {
+    // AuthContext kullanıcı bilgisini yüklüyorsa bekle
+    if (authLoading || !currentUser) {
+      return;
+    }
+
     console.log("AllAppointmentsList: Alınan randevular çekiliyor...");
     setLoading(true);
     setError(null);
@@ -87,7 +93,7 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
     } finally {
       setLoading(false); 
     }
-  }, []); // API client token'ı otomatik yönetiyor 
+  }, [authLoading, currentUser]); // authLoading ve currentUser değişikliklerini dinle 
 
 
   // 'AvailableSlots'tan kopyaladık:
