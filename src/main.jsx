@@ -5,12 +5,25 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx';
 import { Toaster } from 'react-hot-toast';
+import * as Sentry from '@sentry/react';
+
+// Sentry başlatma (DSN env ile kontrol edilir)
+if (import.meta.env && import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    tracesSampleRate: 0.2, // performans izleme örnekleme oranı
+    replaysSessionSampleRate: 0.0,
+    environment: import.meta.env.MODE || 'production',
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <Sentry.ErrorBoundary fallback={<div style={{padding:16}}>Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.</div>}>
+          <App />
+        </Sentry.ErrorBoundary>
         <Toaster 
           position="top-right"
           toastOptions={{
