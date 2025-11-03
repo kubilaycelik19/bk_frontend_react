@@ -3,7 +3,11 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'https://bk-api-evsk.onrender.com';
+// Base URL'i ortam değişkeninden al; yoksa mevcut prod URL'yi kullan
+const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL)
+    ? import.meta.env.VITE_API_BASE_URL
+    : 'https://bk-api-evsk.onrender.com';
 
 // Axios instance oluştur
 const apiClient = axios.create({
@@ -11,7 +15,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 saniye timeout
+  timeout: 60000, // 60 saniye timeout (Render cold start senaryoları için)
 });
 
 // Request Interceptor - Her istekten önce çalışır
