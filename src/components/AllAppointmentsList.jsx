@@ -16,6 +16,8 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null); // İptal edilen randevu ID'si
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // API client token'ı otomatik yönetiyor, accessToken'a ihtiyacımız yok
   const { loading: authLoading, currentUser } = useAuth();
@@ -180,14 +182,24 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
   }
 
   // 6. JSX (HTML) Kısmı - Modern tasarım
+  const totalItems = appointments.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const pagedAppointments = appointments.slice(startIndex, endIndex);
+
   return (
     <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-gray-800 mb-2">Alınmış Randevular (Tümü)</h3>
-        <p className="text-gray-600 text-sm">{appointments.length} randevu bulundu</p>
+        <p className="text-gray-600 text-sm">{totalItems} randevu bulundu</p>
+        {totalItems > 0 && (
+          <p className="text-gray-500 text-xs mt-1">Gösterilen: {startIndex + 1}–{endIndex}</p>
+        )}
       </div>
       
-      {appointments.length === 0 ? (
+      {totalItems === 0 ? (
         <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
           <div className="text-gray-400 text-4xl mb-3">📋</div>
           <p className="text-gray-600 font-medium">Gösterilecek randevu bulunamadı.</p>
@@ -195,7 +207,7 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
         </div>
       ) : (
         <div className="grid gap-4">
-          {appointments.map(appt => {
+          {pagedAppointments.map(appt => {
             // Güvenlik: Null/undefined kontrolü - eğer veri eksikse bu randevuyu render etme
             if (!appt || !appt.patient || !appt.time_slot || !appt.time_slot.start_time) {
               return null;
@@ -271,6 +283,26 @@ function AllAppointmentsList({ refreshKey, onAppointmentCancelled }) {
               </div>
             );
           })}
+          {/* Sayfalama Kontrolleri */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="text-xs text-gray-500">Sayfa {safePage} / {totalPages}</div>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+              >
+                Önceki
+              </button>
+              <button
+                className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+              >
+                Sonraki
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
