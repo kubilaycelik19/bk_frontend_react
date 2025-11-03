@@ -1,7 +1,8 @@
-    // src/components/AvailableSlots.jsx (NİHAİ DOĞRU HALİ)
+    // src/components/AvailableSlots.jsx (React Query ile refaktör edildi)
 
-import React, { useState, useEffect, useCallback } from 'react';
-import apiClient, { API_BASE_URL } from '../utils/apiClient.js';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../utils/apiClient.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import toast from 'react-hot-toast';
 
@@ -9,9 +10,6 @@ import toast from 'react-hot-toast';
     // prop'larını Ebeveyn'den (App.jsx) alıyoruz
     function AvailableSlots({ refreshKey, onAppointmentBooked }) {
       
-      const [slots, setSlots] = useState([]); 
-      const [loading, setLoading] = useState(true);
-      const [error, setError] = useState(null);
       const [bookingId, setBookingId] = useState(null);
       const [selectedSlot, setSelectedSlot] = useState(null); // Seçilen slot
       const [appointmentNote, setAppointmentNote] = useState(''); // Randevu notu
@@ -19,50 +17,27 @@ import toast from 'react-hot-toast';
 
       // Global Hafıza'dan currentUser'ı alıyoruz (role göre görüntüleme için)
       const { currentUser, loading: authLoading } = useAuth();
+      const queryClient = useQueryClient();
       
-      // API'den müsait slotları çeken fonksiyon
-      const fetchSlots = useCallback(async () => {
-        // AuthContext kullanıcı bilgisini yüklüyorsa bekle
-        if (authLoading || !currentUser) {
-          return;
-        }
-        
-        // --- İŞTE İLK LOGLAMA BURADA ---
-        console.log("AvailableSlots: Slotlar çekiliyor...");
-        
-        setLoading(true);
-        setError(null);
-
-        try {
+      // React Query ile slotları çekme
+      const {
+        data: slots = [],
+        isLoading: loading,
+        error: queryError
+      } = useQuery({
+        queryKey: ['availableSlots', refreshKey],
+        queryFn: async () => {
           const response = await apiClient.get('/api/v1/slots/');
-          
           // Backend'den gelen slotları filtrele: Sadece müsait (is_booked: false) olanları göster
-          // Eğer backend zaten filtreliyorsa bu işlem gereksiz olabilir, ama güvenlik için ekliyoruz
           const availableSlots = Array.isArray(response.data) 
             ? response.data.filter(slot => slot.is_booked === false || slot.is_booked === undefined)
             : [];
-          
-          setSlots(availableSlots);
-          
-          // --- İŞTE İKİNCİ LOGLAMA BURADA ---
-          console.log("AvailableSlots: Slotlar çekildi (filtrelenmiş):", availableSlots);
-          
-        } catch (err) {
-          console.error("AvailableSlots: Slot çekme hatası!", err);
-          const errorMessage = err?.error?.message || 
-                              "Slotlar çekilirken bir hata oluştu.";
-          setError(errorMessage);
-        } finally {
-          setLoading(false); 
-        }
-      }, [authLoading, currentUser]); // authLoading ve currentUser değişikliklerini dinle
+          return availableSlots;
+        },
+        enabled: !authLoading && !!currentUser, // Auth yüklenene kadar bekle
+      });
 
-      
-      // 'useEffect', hem ilk yüklemede hem de 'refreshKey' (sinyal) değiştiğinde
-      // 'fetchSlots'u tetikler.
-      useEffect(() => {
-        fetchSlots(); 
-      }, [fetchSlots, refreshKey]); 
+      const error = queryError?.error?.message || queryError?.message || null; 
 
       
       // Slot seçme - Not girişi için modal aç
@@ -79,75 +54,78 @@ import toast from 'react-hot-toast';
         setAppointmentNote('');
       };
 
-      // "Randevu Al" (Hasta) - Not ile birlikte
-      const handleBookAppointment = async () => {
-        if (!selectedSlot) return;
-
-        console.log(`Randevu alma isteği başladı. Slot ID: ${selectedSlot.id}`);
-        setBookingId(selectedSlot.id); 
-        setError(null);
-
-        try {
-          await apiClient.post('/api/v1/appointments/', {
-            "time_slot_id": selectedSlot.id, 
-            "notes": appointmentNote || ""
+      // Randevu alma mutation'ı
+      const bookAppointmentMutation = useMutation({
+        mutationFn: async ({ slotId, notes }) => {
+          return await apiClient.post('/api/v1/appointments/', {
+            "time_slot_id": slotId, 
+            "notes": notes || ""
           });
-          
-          console.log("Randevu başarıyla alındı:", selectedSlot.id);
+        },
+        onSuccess: (data, variables) => {
+          // Slotları ve randevuları yeniden çek
+          queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
+          queryClient.invalidateQueries({ queryKey: ['myAppointments'] });
+          queryClient.invalidateQueries({ queryKey: ['allAppointments'] });
           
           // Modal'ı kapat
           handleCloseModal();
 
           // BAŞARI: Ebeveyn'e haber ver
           if (onAppointmentBooked) {
-              onAppointmentBooked();
+            onAppointmentBooked();
           }
 
           // Başarı mesajı
           toast.success('Randevunuz başarıyla oluşturuldu! 🎉');
-
-        } catch (err) {
-          console.error("Randevu alınamadı:", err);
+          setBookingId(null);
+        },
+        onError: (err) => {
           const errorMessage = err?.error?.message || 
                               err?.error?.detail || 
                               "Randevu alınamadı. Lütfen tekrar deneyin.";
-          setError(errorMessage);
           toast.error(errorMessage);
-        } finally {
-          setBookingId(null); 
+          setBookingId(null);
         }
+      });
+
+      // "Randevu Al" (Hasta) - Not ile birlikte
+      const handleBookAppointment = () => {
+        if (!selectedSlot) return;
+        setBookingId(selectedSlot.id);
+        bookAppointmentMutation.mutate({
+          slotId: selectedSlot.id,
+          notes: appointmentNote
+        });
       };
 
-      // "Slot Sil" (Psikolog/Admin) butonunun mantığı
-      const handleDeleteSlot = async (slotId) => {
-        console.log(`Slot silme isteği başladı. Slot ID: ${slotId}`);
-        setBookingId(slotId); 
-        setError(null);
-
-        if (!window.confirm(`ID: ${slotId} olan slotu silmek istediğinizden emin misiniz?`)) {
-          setBookingId(null);
-          return; 
-        }
-
-        try {
-          await apiClient.delete(`/api/v1/slots/${slotId}/`);
-          
-          console.log("Slot başarıyla silindi. ID:", slotId);
+      // Slot silme mutation'ı
+      const deleteSlotMutation = useMutation({
+        mutationFn: async (slotId) => {
+          return await apiClient.delete(`/api/v1/slots/${slotId}/`);
+        },
+        onSuccess: () => {
+          // Slotları yeniden çek
+          queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
           toast.success('Müsait zaman slotu başarıyla silindi.');
-          
-          // BAŞARI: Listeyi direkt tazele
-          fetchSlots(); 
-
-        } catch (err) {
-          console.error("Slot silinemedi:", err);
+          setBookingId(null);
+        },
+        onError: (err) => {
           const errorMessage = err?.error?.message || 
                               err?.error?.detail || 
                               "Slot silinemedi.";
           toast.error(`Hata: ${errorMessage}`);
-          setError(errorMessage);
-        } finally {
-          setBookingId(null); 
+          setBookingId(null);
         }
+      });
+
+      // "Slot Sil" (Psikolog/Admin) butonunun mantığı
+      const handleDeleteSlot = (slotId) => {
+        if (!window.confirm(`ID: ${slotId} olan slotu silmek istediğinizden emin misiniz?`)) {
+          return; 
+        }
+        setBookingId(slotId);
+        deleteSlotMutation.mutate(slotId);
       };
 
       // 5. Arayüz (UI) Mantığı
@@ -238,7 +216,7 @@ import toast from 'react-hot-toast';
                       <button 
                         className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none text-sm"
                         onClick={() => handleSelectSlot(slot)}
-                        disabled={loading}
+                        disabled={loading || bookAppointmentMutation.isPending}
                       >
                         Seç
                       </button>
@@ -282,26 +260,31 @@ import toast from 'react-hot-toast';
                   />
                 </div>
 
-                {error && (
+                {(error || bookAppointmentMutation.error) && (
                   <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg mb-4">
-                    <p className="text-red-700 text-sm font-medium">{error}</p>
+                    <p className="text-red-700 text-sm font-medium">
+                      {bookAppointmentMutation.error?.error?.message || 
+                       bookAppointmentMutation.error?.error?.detail || 
+                       error || 
+                       "Randevu alınamadı. Lütfen tekrar deneyin."}
+                    </p>
                   </div>
                 )}
 
                 <div className="flex space-x-3">
                   <button
                     onClick={handleCloseModal}
-                    disabled={loading}
+                    disabled={bookAppointmentMutation.isPending}
                     className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     İptal
                   </button>
                   <button
                     onClick={handleBookAppointment}
-                    disabled={loading || bookingId === selectedSlot.id}
+                    disabled={bookAppointmentMutation.isPending || bookingId === selectedSlot.id}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {loading || bookingId === selectedSlot.id ? (
+                    {bookAppointmentMutation.isPending || bookingId === selectedSlot.id ? (
                       <>
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
