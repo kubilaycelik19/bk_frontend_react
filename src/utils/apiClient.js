@@ -3,7 +3,10 @@
 
 import axios from 'axios';
 
-// Base URL'i ortam değişkeninden al; yoksa mevcut prod URL'yi kullan
+// Base URL'i ortam değişkeninden al
+// Local development: .env.local dosyasından VITE_API_BASE_URL=http://127.0.0.1:8000
+// Production: Vercel/Render environment variable'dan VITE_API_BASE_URL=https://bk-api-evsk.onrender.com
+// Fallback: Production URL (sadece env var yoksa)
 const API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL)
     ? import.meta.env.VITE_API_BASE_URL
@@ -12,6 +15,8 @@ const API_BASE_URL =
 // DEBUG: Hangi API'ye istek atıldığını console'da göster
 console.log('🔗 [API CLIENT] API Base URL:', API_BASE_URL);
 console.log('🔗 [API CLIENT] VITE_API_BASE_URL env var:', import.meta.env?.VITE_API_BASE_URL || 'Tanımsız');
+console.log('🔗 [API CLIENT] import.meta.env:', import.meta.env);
+console.log('🔗 [API CLIENT] MODE:', import.meta.env?.MODE);
 
 // Axios instance oluştur
 const apiClient = axios.create({
