@@ -2,6 +2,7 @@
 // Sadece "Giriş Formu"nu (LoginForm) ortalayan bir "sayfa"
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import LoginForm from '../components/LoginForm'; // GÖREV 96'da yarattığımız bileşen
 
 function LoginPage() {
@@ -13,8 +14,6 @@ function LoginPage() {
           <LoginForm />
         </div>
         
-        {/* Gelecekte eklenebilir: Kayıt ol linki */}
-        {/* 
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
             Hesabınız yok mu?{' '}
@@ -23,7 +22,6 @@ function LoginPage() {
             </Link>
           </p>
         </div>
-        */}
       </div>
     </div>
   );

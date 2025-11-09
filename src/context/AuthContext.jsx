@@ -108,7 +108,36 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 7. ÇIKIŞ YAP FONKSİYONU
+  // 7. KAYIT OL FONKSİYONU
+  const register = async (email, password, firstName, lastName) => {
+    try {
+      // Kullanıcı kaydı oluştur
+      // Backend email'den otomatik username oluşturur
+      const response = await apiClient.post('/api/v1/users/', {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName
+      });
+
+      console.log("AuthContext: Kayıt başarılı.", response.data);
+      return true; // Başarılı
+
+    } catch (error) {
+      console.error("AuthContext: Kayıt hatası!", error);
+      
+      // Hata mesajını döndür (RegisterForm'da kullanılabilir)
+      return { 
+        success: false, 
+        error: error.error || {
+          code: 'REGISTER_ERROR',
+          message: 'Kayıt olunamadı. Lütfen bilgilerinizi kontrol edin.'
+        }
+      };
+    }
+  };
+
+  // 8. ÇIKIŞ YAP FONKSİYONU
   const logout = () => {
     setAccessToken(null);
     setCurrentUser(null);
@@ -119,12 +148,13 @@ export function AuthProvider({ children }) {
     console.log("AuthContext: Çıkış yapıldı.");
   };
 
-  // 8. Bu "hafıza kutusunun" tüm alt bileşenlere (children)
+  // 9. Bu "hafıza kutusunun" tüm alt bileşenlere (children)
   //    hangi bilgileri ve fonksiyonları sağlayacağını belirle
   const value = {
     accessToken,
     currentUser,
     login,
+    register,
     logout,
     loading // İlk yükleme durumunu da export et
   };

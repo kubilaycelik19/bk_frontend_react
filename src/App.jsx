@@ -11,6 +11,7 @@ import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import PatientPanelPage from './pages/PatientPanelPage';
 
@@ -27,6 +28,7 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
         
         {/* Admin Panel - Sadece admin kullanıcılar erişebilir */}
         <Route 
