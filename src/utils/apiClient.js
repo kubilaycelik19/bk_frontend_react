@@ -9,6 +9,10 @@ const API_BASE_URL =
     ? import.meta.env.VITE_API_BASE_URL
     : 'https://bk-api-evsk.onrender.com';
 
+// DEBUG: Hangi API'ye istek atıldığını console'da göster
+console.log('🔗 [API CLIENT] API Base URL:', API_BASE_URL);
+console.log('🔗 [API CLIENT] VITE_API_BASE_URL env var:', import.meta.env?.VITE_API_BASE_URL || 'Tanımsız');
+
 // Axios instance oluştur
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -21,17 +25,25 @@ const apiClient = axios.create({
 // Request Interceptor - Her istekten önce çalışır
 apiClient.interceptors.request.use(
   (config) => {
+    // DEBUG: İstek detaylarını logla
+    console.log(`📤 [API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`📤 [API REQUEST] Full URL: ${config.baseURL}${config.url}`);
+    
     // Token varsa header'a ekle
     const token = localStorage.getItem('accessToken') || 
                   (typeof window !== 'undefined' && window.__authToken__);
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('📤 [API REQUEST] Token eklendi');
+    } else {
+      console.warn('⚠️ [API REQUEST] Token yok!');
     }
     
     return config;
   },
   (error) => {
+    console.error('❌ [API REQUEST] Request interceptor hatası:', error);
     return Promise.reject(error);
   }
 );
