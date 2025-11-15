@@ -14,14 +14,19 @@
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
       return (
-        <nav className="bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg">
+        <nav className="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo/Site Adı */}
               <div className="flex-shrink-0">
-                <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent hover:from-blue-300 hover:to-blue-200 transition-all duration-200">
-                  <span className="hidden sm:inline">Dr. Başak Şeref Psikoloji</span>
-                  <span className="sm:hidden">Dr. BŞ</span>
+                <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-white hover:text-slate-200 transition-colors duration-200 flex items-center gap-2">
+                  <img 
+                    src="/images/basak.png" 
+                    alt="Başak Logo" 
+                    className="w-13 h-12 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/0"
+                  />
+                  <span className="hidden sm:inline">Başak Şeref</span>
+                  <span className="sm:hidden">Başak</span>
                 </Link>
               </div>
 
@@ -29,25 +34,25 @@
               <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
                 <Link 
                   to="/" 
-                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors duration-200"
+                  className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors duration-200"
                 >
                   Anasayfa
                 </Link>
                 <Link 
                   to="/about" 
-                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors duration-200"
+                  className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors duration-200"
                 >
                   Hakkımda
                 </Link>
 
                 {/* Randevu Al Butonu - Her zaman görünür */}
                 {!currentUser && (
-                  <Link 
-                    to="/login" 
-                    className="px-4 py-2 rounded-md text-sm font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    Randevu Al
-                  </Link>
+                <Link 
+                  to="/login" 
+                  className="px-4 py-2 rounded-full text-sm font-semibold bg-white text-slate-700 hover:bg-slate-100 shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  Randevu Al
+                </Link>
                 )}
 
                 {/* --- Koşullu (Rol Bazlı) Linkler --- */}
@@ -57,21 +62,21 @@
                     {currentUser.is_staff ? (
                       <Link 
                         to="/admin-panel" 
-                        className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                       >
                         Yönetim Paneli
                       </Link>
                     ) : (
                       <Link 
                         to="/patient-panel" 
-                        className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                       >
                         Randevu Panelim
                       </Link>
                     )}
                     <button 
                       onClick={logout} 
-                      className="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors duration-200"
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                     >
                       Çıkış Yap
                     </button>
@@ -80,7 +85,7 @@
                   // Eğer GİRİŞ YAPILMAMIŞSA:
                   <Link 
                     to="/login" 
-                    className="px-4 py-2 rounded-md text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transition-all duration-200"
+                    className="px-4 py-2 rounded-full text-sm font-semibold bg-white text-slate-700 hover:bg-slate-100 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     Giriş Yap
                   </Link>
@@ -90,7 +95,7 @@
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="md:hidden p-2 rounded-lg text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 aria-label="Menü"
               >
                 {mobileMenuOpen ? (
@@ -111,14 +116,14 @@
                 <Link 
                   to="/" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition-colors duration-200"
+                  className="block px-3 py-2 rounded-lg text-base font-medium hover:bg-white/20 transition-colors duration-200"
                 >
                   Anasayfa
                 </Link>
                 <Link 
                   to="/about" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition-colors duration-200"
+                  className="block px-3 py-2 rounded-lg text-base font-medium hover:bg-white/20 transition-colors duration-200"
                 >
                   Hakkımda
                 </Link>
@@ -127,7 +132,7 @@
                   <Link 
                     to="/login" 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transition-all duration-200"
+                    className="block px-3 py-2 rounded-full text-base font-semibold bg-white text-slate-700 hover:bg-slate-100 transition-all duration-200 text-center"
                   >
                     Randevu Al
                   </Link>
@@ -139,7 +144,7 @@
                       <Link 
                         to="/admin-panel" 
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                        className="block px-3 py-2 rounded-lg text-base font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                       >
                         Yönetim Paneli
                       </Link>
@@ -147,7 +152,7 @@
                       <Link 
                         to="/patient-panel" 
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                        className="block px-3 py-2 rounded-lg text-base font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                       >
                         Randevu Panelim
                       </Link>
@@ -157,7 +162,7 @@
                         setMobileMenuOpen(false);
                         logout();
                       }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-red-600 hover:bg-red-700 transition-colors duration-200"
+                      className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium bg-white/20 hover:bg-white/30 transition-colors duration-200"
                     >
                       Çıkış Yap
                     </button>
@@ -166,7 +171,7 @@
                   <Link 
                     to="/login" 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
+                    className="block px-3 py-2 rounded-full text-base font-semibold bg-white text-slate-700 hover:bg-slate-100 transition-all duration-200 text-center"
                   >
                     Giriş Yap
                   </Link>
