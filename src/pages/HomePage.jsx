@@ -3,10 +3,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { getWhatsAppBookingUrl } from '../utils/whatsapp';
 
 function HomePage() {
-  const { currentUser } = useAuth();
+  const waUrl = getWhatsAppBookingUrl();
+  const heroCtaClass =
+    'w-full sm:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-10 py-4 rounded-full font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-center text-lg';
 
   return (
     <article className="space-y-10 md:space-y-14">
@@ -45,21 +47,15 @@ function HomePage() {
 
           {/* Call-to-Action Butonları */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          {currentUser ? (
-            <Link 
-                to="/patient-panel" 
-                className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-10 py-4 rounded-full font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-center text-lg"
-            >
-                Randevu Paneline Git →
-            </Link>
-          ) : (
-            <Link 
-              to="/login" 
-                className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-10 py-4 rounded-full font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-center text-lg"
-            >
+            {waUrl ? (
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" className={heroCtaClass}>
                 Randevu Al →
-            </Link>
-          )}
+              </a>
+            ) : (
+              <Link to="/about" className={heroCtaClass}>
+                Randevu Al →
+              </Link>
+            )}
           
           <Link 
             to="/about" 
@@ -468,7 +464,7 @@ function JourneyTimelineSection() {
     {
       emoji: '👋',
       title: 'Merhaba',
-      description: 'Bana ulaşın. WhatsApp\'tan veya randevu sisteminden kolayca iletişime geçebilirsiniz.',
+      description: 'Bana ulaşın. WhatsApp üzerinden kolayca iletişime geçebilirsiniz.',
       color: 'from-orange-400 to-amber-500',
       bg: 'from-orange-50 to-amber-50'
     },

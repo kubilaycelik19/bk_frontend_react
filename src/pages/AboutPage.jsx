@@ -69,7 +69,7 @@ function AboutPage() {
         <div className="relative z-10 text-center max-w-3xl mx-auto">
           <div className="text-6xl md:text-7xl mb-6 animate-bounce-slow inline-block">💚</div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Birlikte Yürüyelim mi?
+            Birlikte Yürümek ister misin?
           </h2>
           <p className="text-lg md:text-xl text-white/95 leading-relaxed mb-8 font-medium">
             Bu yolculukta yalnız değilsiniz. Sorularınız, merak ettikleriniz, 
@@ -78,9 +78,6 @@ function AboutPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-white font-semibold text-sm md:text-base">
               WhatsApp'tan ulaşabilirsiniz
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-white font-semibold text-sm md:text-base">
-              Randevu alabilirsiniz
             </div>
           </div>
         </div>

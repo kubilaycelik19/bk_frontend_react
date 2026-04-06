@@ -2,16 +2,20 @@
 
 ## Local Development
 
-1. `.env.local` dosyasını oluşturun (zaten oluşturulmuş olmalı):
+Depo kökünden `frontend` klasörüne girin.
+
+1. `frontend/.env.local` oluşturun:
 ```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
+# İsteğe bağlı — sadece API çağrısı yapıyorsanız
+# VITE_API_BASE_URL=http://127.0.0.1:8000
 VITE_WHATSAPP_NUMBER=905551234567
 ```
 
 **Not**: `VITE_WHATSAPP_NUMBER` formatı: Ülke kodu ile birlikte, boşluksuz (örn: 905551234567)
 
-2. Frontend'i başlatın:
+2. Başlatın:
 ```bash
+cd frontend
 npm run dev
 ```
 
