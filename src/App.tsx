@@ -1,13 +1,10 @@
-// src/App.jsx
 // Ana routing yapısı - Public site
+import React from 'react'
+import { Routes, Route } from 'react-router-dom'
 
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-
-import Layout from './components/Layout';
-
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
+import Layout from './components/Layout'
+import HomePage from './pages/HomePage'
+import AboutPage from './pages/AboutPage'
 
 function App() {
   return (
@@ -17,7 +14,8 @@ function App() {
         <Route path="about" element={<AboutPage />} />
       </Route>
     </Routes>
-  );
+  )
 }
 
-export default App;
+export default App
+
