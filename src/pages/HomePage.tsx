@@ -43,16 +43,6 @@ function HomePage() {
 
           {/* Call-to-Action Butonları */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {waUrl ? (
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={heroCtaClass}
-              >
-                İletişime Geç
-              </a>
-            ) : null}
 
             <Link
               to="/about"
