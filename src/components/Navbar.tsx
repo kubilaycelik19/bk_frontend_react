@@ -87,25 +87,6 @@ function Navbar() {
             >
               Hakkımda
             </Link>
-            {waUrl ? (
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
-                className={appointmentClassMobile}
-              >
-                Randevu Al
-              </a>
-            ) : (
-              <Link
-                to="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className={appointmentClassMobile}
-              >
-                Randevu Al
-              </Link>
-            )}
           </div>
         )}
       </div>
