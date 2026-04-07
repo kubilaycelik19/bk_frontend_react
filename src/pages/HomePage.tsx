@@ -5,6 +5,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getWhatsAppBookingUrl } from '../utils/whatsapp'
 import aboutImage from '../images/aboutimage.jpeg'
+import { Helmet } from 'react-helmet-async'
+import { OG_IMAGE_URL, SITE_URL } from '../constants/seo'
 
 type ScrollAnimationHookReturn = [
   React.RefObject<HTMLDivElement | null>,
@@ -18,6 +20,23 @@ function HomePage() {
 
   return (
     <article className="space-y-10 md:space-y-14">
+      <Helmet>
+        <title>Başak Şeref | Uzman Psikolog & Çevrimiçi Terapi</title>
+        <meta
+          name="description"
+          content="İlişki sorunları, kaygı ve stres yönetimi üzerine uzmanlaşmış psikolog Başak Şeref ile tanışın. Yargılanmadan dinlenmek için hemen iletişime geçin."
+        />
+        <link rel="canonical" href={SITE_URL} />
+        <meta property="og:title" content="Başak Şeref | Uzman Psikolog & Çevrimiçi Terapi" />
+        <meta
+          property="og:description"
+          content="İlişki sorunları, kaygı ve stres yönetimi üzerine uzmanlaşmış psikolog Başak Şeref ile tanışın."
+        />
+        <meta property="og:url" content={SITE_URL} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
+      </Helmet>
       {/* Hero Section - Umut vaadeden karşılama */}
       <div className="bg-white p-8 md:p-14 rounded-3xl shadow-lg border border-slate-200/70 relative overflow-hidden">
 
@@ -428,7 +447,7 @@ function VisualMessageSection() {
             <div className="relative z-10 w-full h-full">
               <img
                 src={aboutImage}
-                alt="Home Page Image"
+                alt="Psikolog Basak Seref terapi gorusmesi ortami"
                 className="absolute inset-0 w-full h-full object-cover object-[center_70%] rounded-2xl"
               />
             </div>

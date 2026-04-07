@@ -21,7 +21,7 @@ function Navbar() {
             >
               <img
                 src={basakLogo}
-                alt="Başak Logo"
+                alt="Psikolog Basak Seref logosu"
                 className="w-13 h-12 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/0"
               />
               <span className="hidden sm:inline">Başak Şeref</span>

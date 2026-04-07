@@ -14,7 +14,7 @@ function Footer() {
             <h3 className="text-lg md:text-xl font-bold flex items-center gap-2 justify-center text-gray-800 group-hover:text-orange-600 transition-colors duration-200">
               <img
                 src={basakLogo}
-                alt="Başak Logo"
+                alt="Psikolog Basak Seref logosu"
                 className="w-13 h-12 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/0"
               />
               <span>Başak Şeref</span>

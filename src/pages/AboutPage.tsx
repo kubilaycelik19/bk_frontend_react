@@ -3,6 +3,8 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import profileImage from '../images/profile.jpg'
+import { Helmet } from 'react-helmet-async'
+import { OG_IMAGE_URL, SITE_URL } from '../constants/seo'
 
 type ScrollAnimationHookReturn = [
   React.RefObject<HTMLDivElement | null>,
@@ -12,6 +14,23 @@ type ScrollAnimationHookReturn = [
 function AboutPage() {
   return (
     <article className="max-w-4xl mx-auto space-y-8">
+      <Helmet>
+        <title>Hakkımda | Psk. Başak Şeref</title>
+        <meta
+          name="description"
+          content="Psk. Başak Şeref'in uzmanlık alanları, terapi yaklaşımı ve danışanlarıyla çalışma prensipleri hakkında bilgi alın."
+        />
+        <link rel="canonical" href={`${SITE_URL}/about`} />
+        <meta property="og:title" content="Hakkımda | Psk. Başak Şeref" />
+        <meta
+          property="og:description"
+          content="Psk. Başak Şeref'in uzmanlık alanları ve terapi yaklaşımı hakkında bilgi alın."
+        />
+        <meta property="og:url" content={`${SITE_URL}/about`} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
+      </Helmet>
       {/* Başlık Bölümü - Modern ve Kibar */}
       <div className="relative overflow-hidden">
         {/* Arka plan - Subtle gradient */}
@@ -162,7 +181,7 @@ function ProfileImage() {
       {!imageError ? (
         <img
           src={imageSrc}
-          alt="Başak Şeref - Profil Fotoğrafı"
+          alt="Psikolog Başak Şeref"
           className="w-full h-full object-cover"
           onError={handleImageError}
         />
